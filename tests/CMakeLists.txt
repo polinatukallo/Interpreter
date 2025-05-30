@@ -14,9 +14,16 @@ enable_testing()
 
 add_executable(
   itmoscript_tests
+  illegal_ops_test.cpp
   function_test.cpp
   types_test.cpp
   loop_and_branch_test.cpp
+  if_else_test.cpp
+  list_functions_test.cpp
+  number_functions_test.cpp
+  string_functions_test.cpp 
+  system_functions_test.cpp
+
 )
 
 target_link_libraries(
