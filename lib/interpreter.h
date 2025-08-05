@@ -57,16 +57,23 @@ class Interpreter {
             if (isNil()) return 0.0; // nil приводится к 0
             throw std::runtime_error("Cannot convert type " + typeName() + " to Number");
         }
-        const std::string& asString() const { return std::get<std::string>(data); } // преобразование в строку
-        std::vector<Value>& asList() { // получение изменяемой ссылки на список
+        // преобразование в строку
+        const std::string& asString() const { return std::get<std::string>(data); } 
+
+        // получение изменяемой ссылки на список
+        std::vector<Value>& asList() { 
             if (!isList()) throw std::runtime_error("Value is not a List, cannot call asList()");
             return *std::get<std::shared_ptr<std::vector<Value>>>(data);
         }
-        const std::vector<Value>& asList() const { // получение константной ссылки на список
+
+        // получение константной ссылки на список
+        const std::vector<Value>& asList() const { 
             if (!isList()) throw std::runtime_error("Value is not a List, cannot call asList()");
             return *std::get<std::shared_ptr<std::vector<Value>>>(data);
         }
-        const std::shared_ptr<Function>& asFunction() const { return std::get<std::shared_ptr<Function>>(data); } // преобразование в функцию
+
+        // преобразование в функцию
+        const std::shared_ptr<Function>& asFunction() const { return std::get<std::shared_ptr<Function>>(data); } 
         
         // преобразование значения в строку для вывода
         std::string toString() const {
@@ -131,7 +138,7 @@ class Interpreter {
             if (isList()) return !asList().empty(); // пустой список - ложь
             if (isFunction()) return true; // функция всегда истина
             if (isNil()) return false; // nil всегда ложь
-            return true; // остальные типы (если появятся) - истина по умолчанию
+            return true; // остальные типы - истина по умолчанию
         }
     };
 
@@ -152,7 +159,7 @@ class Interpreter {
     public:
         // конструктор интерпретатора
         Interpreter(std::ostream& out) : output(out) {
-            std::srand(static_cast<unsigned int>(std::time(0))); // инициализация генератора случайных чисел
+            std::srand(static_cast<unsigned int>(std::time(0))); // инициализация генератора случайных чисел (для rand())
             globals["len"] = Value{nullptr}; // предварительное объявление встроенной функции len
         }
 
@@ -191,7 +198,7 @@ class Interpreter {
             if (auto listLit = dynamic_cast<ListLiteral*>(expr)) { // создание списка
                 std::vector<Value> values_vec;
                 for (const auto& elemExpr : listLit->elements) {
-                    values_vec.push_back(evaluate(elemExpr.get())); // вычисляем каждый элемент списка
+                    values_vec.push_back(evaluate(elemExpr.get())); // рекурсивно вычисляем каждый элемент списка
                 }
                 return Value{std::make_shared<std::vector<Value>>(std::move(values_vec))};
             }
@@ -211,6 +218,7 @@ class Interpreter {
                 Identifier* calleeAsIdentifier = dynamic_cast<Identifier*>(call->callee.get());
                 if (calleeAsIdentifier) { // если имя функции - идентификатор (не выражение)
                     const std::string& funcName = calleeAsIdentifier->name;
+
                     // обработка встроенных функций
                     if (funcName == "print") {
                         for (size_t i = 0; i < call->arguments.size(); ++i) {
@@ -259,10 +267,10 @@ class Interpreter {
                         
                         Identifier* listAsIdentifier = dynamic_cast<Identifier*>(call->arguments[0].get());
                         if (!listAsIdentifier) {
-                            throw std::runtime_error("push() currently only supports pushing to lists stored in variables.");
+                            throw std::runtime_error("push() only supports pushing to lists stored in variables.");
                         }
                         auto it = globals.find(listAsIdentifier->name);
-                        if (it == globals.end() || !it->second.isList()) {
+                        if (it == globals.end() || !it->second.isList()) { // если не нашли
                             throw std::runtime_error("Variable '" + listAsIdentifier->name + "' is not a list or not found for push().");
                         }
                         it->second.asList().push_back(itemVal);
@@ -275,7 +283,7 @@ class Interpreter {
                         }
                         Identifier* listAsIdentifier = dynamic_cast<Identifier*>(call->arguments[0].get());
                         if (!listAsIdentifier) {
-                            throw std::runtime_error("pop() currently only supports popping from lists stored in variables.");
+                            throw std::runtime_error("pop() only supports popping from lists stored in variables.");
                         }
                         auto it = globals.find(listAsIdentifier->name);
                         if (it == globals.end() || !it->second.isList()) {
@@ -370,7 +378,8 @@ class Interpreter {
                         }
                         auto& vec = it->second.asList();
                         if (vec.empty()) return Value{nullptr};
-
+                        
+                        // По скольку все элементы одного типа должны быть, то определяем тип по первому элементу
                         bool sortNumbers = vec[0].isNumber();
                         bool sortStrings = vec[0].isString();
 
@@ -392,16 +401,16 @@ class Interpreter {
                     // функция range: создает список чисел в заданном диапазоне
                     if (funcName == "range") {
                         double start, stop_exclusive, step;
-                        if (call->arguments.size() == 1) {
+                        if (call->arguments.size() == 1) { // range(15)
                             Value stopVal = evaluate(call->arguments[0].get());
                             if (!stopVal.isNumber()) throw std::runtime_error("range() single argument (stop) must be a number");
                             start = 0.0; stop_exclusive = stopVal.asNumber(); step = 1.0;
-                        } else if (call->arguments.size() == 2) {
+                        } else if (call->arguments.size() == 2) { // range(15, 239)
                             Value startVal = evaluate(call->arguments[0].get());
                             Value stopVal = evaluate(call->arguments[1].get());
                             if (!startVal.isNumber() || !stopVal.isNumber()) throw std::runtime_error("range() arguments (start, stop) must be numbers");
                             start = startVal.asNumber(); stop_exclusive = stopVal.asNumber(); step = 1.0;
-                        } else if (call->arguments.size() == 3) {
+                        } else if (call->arguments.size() == 3) {   // range (15, 239, 13)
                             Value startVal = evaluate(call->arguments[0].get());
                             Value stopVal = evaluate(call->arguments[1].get());
                             Value stepVal = evaluate(call->arguments[2].get());
@@ -412,8 +421,10 @@ class Interpreter {
                         }
                         if (step == 0) throw std::runtime_error("range() step argument cannot be zero");
                         auto rangeList_ptr = std::make_shared<std::vector<Value>>();
-                        if (step > 0) { for (double i = start; i < stop_exclusive; i += step) rangeList_ptr->push_back(Value{i}); }
-                        else { for (double i = start; i > stop_exclusive; i += step) rangeList_ptr->push_back(Value{i}); }
+                        if (step > 0) { 
+                            for (double i = start; i < stop_exclusive; i += step) rangeList_ptr->push_back(Value{i}); }
+                        else { 
+                            for (double i = start; i > stop_exclusive; i += step) rangeList_ptr->push_back(Value{i}); }
                         return Value{rangeList_ptr};
                     }
                     // функция abs: возвращает абсолютное значение числа

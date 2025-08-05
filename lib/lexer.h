@@ -11,7 +11,7 @@ enum class TokenType {
     Keyword, Identifier, Number, String, Operator, 
     LParen, RParen, LBracket, RBracket, Comma, Colon,
     EndOfLine, EndOfFile, Semicolon
-};
+};  
 
 // структура для хранения информации о токене
 struct Token {
@@ -89,8 +89,8 @@ private:
     // чтение идентификатора или ключевого слова
     Token readIdentifierOrKeyword() {
         size_t start = pos;
-        while (isalnum(current()) || current() == '_') advance();
-        std::string value = source.substr(start, pos - start);
+        while (isalnum(current()) || current() == '_') advance(); // читаем буквы, цифры, _
+        std::string value = source.substr(start, pos - start); // вырезаем слово 
         
         if (value == "function" || value == "if" || value == "then" || 
             value == "else" || value == "and" || value == "not" || 
@@ -112,7 +112,7 @@ private:
             advance();
             while (isdigit(current())) advance();
         }
-        if (tolower(current()) == 'e') {
+        if (tolower(current()) == 'e') { // для экспоненты
             advance();
             if (current() == '+' || current() == '-') advance();
             while (isdigit(current())) advance();
@@ -120,12 +120,12 @@ private:
         return {TokenType::Number, source.substr(start, pos - start), line, column};
     }
     
-    // чтение строкового литерала
+    // чтение строкового литерала 
     Token readString() {
-        advance();
+        advance(); // пропускаем открыающуюсю кавычку
         std::string value;
         while (current() != '"' && current() != '\0') {
-            if (current() == '\\') {
+            if (current() == '\\') { // обработка экранированных символов (\n, \t и тд)
                 advance();
                 switch (current()) {
                     case 'n': value += '\n'; break;
@@ -143,6 +143,7 @@ private:
         return {TokenType::String, value, line, column};
     }
     
+    // чтение символа (+, ==, (, [, ;, и тд)
     Token readSymbol() {
         char c = current();
         advance();

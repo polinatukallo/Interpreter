@@ -4,22 +4,9 @@
 
 int main(int argc, char** argv) {
     std::string code = R"(
-    max = function(arr)
-    if len(arr) == 0 then
-        return nil
-    end if
-
-    m = arr[0]
-
-    for i in arr
-        if i > m then m = i end if
-    end for
-
-    return m
-end function
-
-print(max([10, -1, 0, 2, 2025, 239]))
-    )";
+    
+    println("Enter here your code")
+)";
 
     std::istringstream input(code);
     std::ostringstream output;

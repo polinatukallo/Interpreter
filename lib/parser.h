@@ -14,7 +14,7 @@ struct ASTNode {
 
 // базовый класс для всех выражений
 struct Expression : ASTNode {
-    virtual Expression* clone() const = 0;
+    virtual Expression* clone() const = 0; // копируем
 };
 
 // числовой литерал
@@ -127,7 +127,7 @@ struct ReturnStatement : Statement {
     }
 };
 
-// блок кода
+// блок кода (if-else, и тд)
 struct Block : ASTNode {
     std::vector<std::unique_ptr<ASTNode>> statements;
 
@@ -362,12 +362,12 @@ class Parser {
     // разбирает унарные операции (not, унарный минус)
     std::unique_ptr<Expression> parseUnary() {
         if (peek().type == TokenType::Keyword && peek().value == "not") {
-            advance(); // Consume "not"
+            advance(); //  "not"
             auto operand = parseUnary(); 
             if (!operand) throw std::runtime_error("Expected operand after 'not'");
             return std::make_unique<UnaryOp>("not", std::move(operand));
         } else if (peek().type == TokenType::Operator && peek().value == "-") {
-            advance(); // Consume "-"
+            advance(); //  "-"
             auto operand = parseUnary();
             if (!operand) throw std::runtime_error("Expected operand after unary '-'");
             return std::make_unique<UnaryOp>("-", std::move(operand));
@@ -436,7 +436,7 @@ class Parser {
             expr = std::make_unique<ListLiteral>(std::move(elements));
         } else if (peek().type == TokenType::Keyword) {
             std::string keyword = advance().value;
-            if (keyword == "true") expr = std::make_unique<NumberLiteral>(1.0);
+            if (keyword == "true") expr = std::make_unique<NumberLiteral>(1.0); // true как 1
             else if (keyword == "false") expr = std::make_unique<NumberLiteral>(0.0);
             else if (keyword == "nil") expr = std::make_unique<NilLiteral>();
             else if (keyword == "function") {
@@ -583,7 +583,29 @@ class Parser {
         return ifStmt;
     }
 
-    // разбирает выражение (начинает с присваивания, т.к. у него самый низкий приоритет)
+/*  parseExpression() - входная точка
+
+    parseAssignment() - присваивания (=, +=, -=)
+
+    parseLogicalOr() - логическое ИЛИ (or)
+
+    parseLogicalAnd() - логическое И (and)
+
+    parseEquality() - сравнения (==, !=)
+
+    parseComparison() - сравнения (<, >, <=, >=)
+
+    parseTerm() - сложение/вычитание (+, -)
+
+    parseFactor() - умножение/деление (*, /, %)
+
+    parseUnary() - унарные операции (-, not)
+
+    parsePrimary() - базовые элементы   */
+
+
+
+    // разбирает выражение (начинает с присваивания, тк у него самый низкий приоритет)
     std::unique_ptr<Expression> parseExpression() {
         return parseAssignment();
     }
